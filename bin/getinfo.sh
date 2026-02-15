@@ -256,7 +256,7 @@ while IFS= read -r line; do
 ##     fi
 ##     echo "***************************************"
 
-    read -r -p "Druk op Enter om door te gaan... " dummy < /dev/tty
+#    read -r -p "Druk op Enter om door te gaan... " dummy < /dev/tty
 
     # Jouw code hier
 done < list.txt
