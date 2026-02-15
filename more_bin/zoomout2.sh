@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#Make sure files end in .jpg and there is no spaces in the file names
+
+# Set your desired resolution here
+resolution_width=1920
+resolution_height=1080
+fps=60
+
+# Set your video length here
+video_length=8
+
+COUNT=0
+
+# ffmpeg -loop 1 -i input.jpg -c:v libx264 -t 10 -pix_fmt yuv420p 
+#z='if(gte(zoom,1.5),1.5,2.0-(on*0.001))' \
+#z='if(gte(zoom,1.5),1.5,zoom+0.001)' \
+#z='if(gte(zoom,1.5),1.5,2.0-(on*0.001))' \
+#z='if(gte(zoom,520),520,zoom+(on^3)*0.0000001)' \
+# -loglevel error
+#-type f \( -name "*.jpg" -o -name "*.png" \)
+#find . -maxdepth 1 -name '*.jpg' | while read line; do
+find . -maxdepth 1 -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.mp4" \) | while read line; do
+  echo ${line:2}
+  COUNT=$(echo "($COUNT+1)"| bc -l);
+  COUNT_ZERO=$(printf '%04d\n' "$COUNT")
+  ffmpeg -stats -hide_banner -threads 8 -nostdin -framerate $fps -i "${line:2}" \
+  -filter_complex \
+  "fps=60,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black,scale=-2:10*ih, \
+  zoompan= \
+  z='zoom+((on/10.0)^2.5)*0.000001' \
+  :d=$(($fps * $video_length)) \
+  :fps=$fps \
+  :x='iw/2-(iw/zoom/2)' \
+  :y='ih/2-(ih/zoom/2)' \
+  :s=${resolution_width}x${resolution_height}, \
+  scale=-2:$resolution_height, \
+  reverse" \
+  -c:v h264_nvenc -t $video_length -pix_fmt yuv420p -b:v 10M "zoom"${COUNT_ZERO}.mp4 3>&1 1>&2- 2>&3- | grep -v "deprecated pixel format used"
+done
+#  "scale=-2:10*ih:force_original_aspect_ratio=decrease,pad=19200:10800:-1:-1:color=black, \
+
+#  -c:v h264_nvenc -t $video_length -pix_fmt yuv420p ${line:2}.mp4
+#  reverse" \
+
+#  echo "Press Enter for Next"
+#  read aaa < /dev/tty
+
+wait
+echo "All done"
